@@ -1,6 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
+const moment = require("moment");
 
 const url = "https://luiscardoso.com.br/?s=feminicidio";
 const outputFile = "posts.json";
@@ -13,30 +14,35 @@ const getWebContent = async url => {
     const $ = cheerio.load(response.data);
 
     $("article").each((i, article) => {
-      const post_title = $("h1.post-title > a", article).text();
+      const post_title = $("h1.post-title > a", article)
+        .text()
+        .trim();
       const post_link = $("h1.post-title > a", article).attr("href");
       const post_content = $(".post-content", article).text();
-      const post_timestamp = $(
-        ".post-info > .post-date time",
-        article
-      ).text();
 
-      
-	  console.log('extraindo post: ', post_title, post_timestamp);
+      moment.locale();
+      const post_timestamp = moment(
+        $(".post-info > .post-date time", article).text(),
+        "lll",
+        "pt-BR"
+	  )
+	  .local("en")
+	  .format();
+	  
+	  console.log(post_timestamp);
+
       if (post_title && post_link && post_content && post_timestamp) {
         const newArticle = {
           post_title,
           post_link,
           post_content,
           post_timestamp
-		};
-		
+        };
 
         extracted_links.push(newArticle);
       }
     });
 
-    //ir para a próxima página
     nextPage = $("span.current")
       .next()
       .attr("href");
@@ -54,7 +60,7 @@ const getWebContent = async url => {
 };
 
 const exportResults = parsedResults => {
-  console.log(`Salvando em arquivo: ${parsedResults.length} registros`);
+  console.log(`Exportando para arquivo: ${parsedResults.length} registros`);
   fs.writeFile(outputFile, JSON.stringify(parsedResults, null, 4), err => {
     if (err) console.error(err);
 
