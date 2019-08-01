@@ -18,18 +18,22 @@ const getWebContent = async url => {
         .text()
         .trim();
       const post_link = $("h1.post-title > a", article).attr("href");
-      const post_content = $(".post-content", article).text();
+      const post_content = $(".post-content", article)
+        .contents()
+        .map((i, elem) => {
+          return $(elem).text() + " ";
+        })
+        .get()
+        .join(" ");
 
       moment.locale();
       const post_timestamp = moment(
         $(".post-info > .post-date time", article).text(),
         "lll",
         "pt-BR"
-	  )
-	  .local("en")
-	  .format();
-	  
-	  console.log(post_timestamp);
+      )
+        .local("en")
+        .format();
 
       if (post_title && post_link && post_content && post_timestamp) {
         const newArticle = {
